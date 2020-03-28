@@ -1,3 +1,20 @@
+function onOpen() {
+  var ui = SpreadsheetApp.getUi();
+  ui.createMenu(multiLang("Settings"))
+    .addItem(multiLang("Bookmarklet"), "fileman")
+    .addItem(multiLang("ATR  days"), "setATRdays")
+    .addSeparator()
+    .addSubMenu(
+      ui
+        .createMenu(multiLang("Oanda settings"))
+        .addItem(multiLang("Account ID setting"), "setAccountID")
+        .addItem(multiLang("Authentication key setting"), "setAuth")
+        .addItem(multiLang("Account type"), "setAccountType")
+    )
+    .addToUi();
+  createWorkSheets();
+}
+
 function doGet(e) {
   var text = e.parameter.text;
 
@@ -45,7 +62,7 @@ function doGet(e) {
 }
 
 function getLoder() {
-  var loader =
+  let loader =
     "(function(f,d,e,a,c,b){" +
     "d=[" +
     '"https://bookmarlet-gs.glitch.me/js/bookmarklet.js"' +
@@ -57,4 +74,11 @@ function getLoder() {
   loader +=
     'function objToParameter(a){if(a instanceof Object&&!(a instanceof Array)){var b=[];Object.keys(a).forEach(function(c){b.push(c+"="+a[c])});return"?"+b.join("&")}return""};';
   return loader;
+}
+
+function multiLang(str) {
+  let lang = SpreadsheetApp.getActiveSpreadsheet()
+    .getSpreadsheetLocale()
+    .substr(0, 2);
+  return LanguageApp.translate(str, "", lang);
 }
