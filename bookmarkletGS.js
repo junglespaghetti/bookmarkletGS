@@ -48,7 +48,7 @@ function getLoder() {
   var loader =
     "(function(f,d,e,a,c,b){" +
     "d=[" +
-    '"https://easy-indexeddb.glitch.me/js/dbBookmarklet.js"' +
+    '"https://bookmarlet-gs.glitch.me/js/bookmarklet.js"' +
     "];e=[" +
     '];for(a=0;a<e.length;a++)b=document.createElement("link"),b.type="text/css",b.rel="stylesheet",b.href=e[a],document.body.appendChild(b);for(a=0;a<d.length;a++)c=document.createElement("script"),c.src=d[a],a==d.length-1&&(c.onload=function(){f()}),document.body.appendChild(c)})' +
     "(function(){loadJsonp(gsUrl,scriptParam)});";
