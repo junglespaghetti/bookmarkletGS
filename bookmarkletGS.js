@@ -1,8 +1,8 @@
 function onOpen() {
   var ui = SpreadsheetApp.getUi();
-  ui.createMenu(multiLang("Settings"))
-    .addItem(multiLang("Bookmarklet"), "fileman")
-    .addItem(multiLang("ATR  days"), "setATRdays")
+  ui.createMenu(multiLang("Scripts"))
+    .addItem(multiLang("Bookmarklet settings"), "fileman")
+    .addItem(multiLang("Get bookmarklet"), "setATRdays")
     .addSeparator()
     .addSubMenu(
       ui
@@ -12,7 +12,6 @@ function onOpen() {
         .addItem(multiLang("Account type"), "setAccountType")
     )
     .addToUi();
-  createWorkSheets();
 }
 
 function doGet(e) {
