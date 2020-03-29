@@ -7,21 +7,24 @@ function onOpen() {
 }
 
 function showBookmarkletSidebar() {
-  let html = HtmlService.createTemplateFromFile("html/mookmarkletSetting.html");
-  html.scriptURL = PropertiesService.getUserProperties().getProperty(
+  let userDate = {};
+  userDate.scriptURL = PropertiesService.getUserProperties().getProperty(
     "scriptURL"
   );
-  html.scriptPassword =
+  userDate.scriptPassword =
     PropertiesService.getUserProperties().getProperty("scriptPassword") ||
     getRndStr();
-  html.scriptCallback = PropertiesService.getUserProperties().getProperty(
+  userDate.scriptCallback = PropertiesService.getUserProperties().getProperty(
     "scriptCallback"
   );
-  html.cdn = PropertiesService.getUserProperties().getProperty("cdn");
-  html.css = PropertiesService.getUserProperties().getProperty("css");
-  html.origin = PropertiesService.getUserProperties().getProperty("origin");
-  html.originLock =
+  userDate.cdn = PropertiesService.getUserProperties().getProperty("cdn");
+  userDate.css = PropertiesService.getUserProperties().getProperty("css");
+  userDate.origin = PropertiesService.getUserProperties().getProperty("origin");
+  userDate.originLock =
     PropertiesService.getUserProperties().getProperty("originLock") || false;
+  
+  let html = HtmlService.createTemplateFromFile("html/mookmarkletSetting.html");
+  html.initData = JSON.stringify(userDate);
   html.urlLavel = multiLang("This script url");
   html.passwordLavel = multiLang("Script password");
   html.callbackLabel = multiLang("Coallback function");

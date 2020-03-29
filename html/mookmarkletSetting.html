@@ -7,15 +7,33 @@
       rel="stylesheet"
     />
     <script>
-        var scriptURL = <?= scriptURL ?>;
-        var pass = <?= scriptPassword ?>;
-        var scriptCallback = <?= scriptCallback ?>;
-        var cdn = <?= cdn ?>;
-        var css = <?= css ?>;
-        var origin = <?= origin ?>;
-        var originLock = <?= originLock ?>;
-
-        function addList(name){
+    
+    var initData = window.JSON.parse(<?= initData ?>);
+    
+    window.addEventListener('load', function() {
+    
+    document.getElementById("scriptUrl").value = initData.scriptURL;
+    document.getElementById("password").value = initData.scriptPassword;
+    document.getElementById("callback").value = initData.scriptCallback;
+    document.getElementById("origin").value = initData.origin;
+    document.getElementById("originLock").value = initData.originLock;
+    addhosthingList(initData.cdn,"cdn");
+  addhosthingList(initData.css,"css");
+  
+    alert(initData.scriptPassword);
+  
+  });
+  
+  function addhosthingList(list,listName){
+  let arr = list.join(",");
+  if(arr[0]){
+  for (var i = 0; i < arr.length; i++) {
+  addList(listName,' value="'+arr[i]+'"');
+  }
+  }
+  }
+    
+        function addList(hostingListName,val){
       let span = document.createElement("span");
         span.innerHTML = '<i class="material-icons" style="font-size:18px;">cancel</i>';
         span.class = "delete";
@@ -24,9 +42,9 @@
         let remove = event.target.parentNode.parentNode;
         remove.parentNode.removeChild(remove);
         });
-        let tableOl = document.getElementById(name+"-list");
+        let tableOl = document.getElementById(hostingListName+"-list");
         let li = document.createElement("li");
-        li.innerHTML ='<input class="formLi" placeholder="Hosting url">';
+        li.innerHTML ='<input class="formLi" placeholder="Hosting url'+ val + '">';
         li.appendChild(span);
         tableOl.appendChild(li);
         };
