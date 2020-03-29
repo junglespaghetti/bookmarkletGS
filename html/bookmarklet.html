@@ -1,14 +1,18 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <base target="_top">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <base target="_top" />
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"
+    />
   </head>
   <body>
     <p><?= bookmarkretDropInfo ?></p>
-    <a href='javascript:(function(){gsUrl="<?= selfUrl ?>";scriptParam={pass:"<?= selfPassword ?>",callback:"<?= userCallback ?>",origin:location.hostname};s=document.createElement("script");s.src=gsUrl+"?pass="+scriptParam.pass+"&loader=true";
-document.body.appendChild(s);})();'><?= bookmarkletName ?></a>
+    <a
+      href='javascript:(function(){gsUrl="<?= selfUrl ?>";scriptParam={pass:"<?= selfPassword ?>",callback:"<?= userCallback ?>",origin:location.hostname};s=document.createElement("script");s.src=gsUrl+"?pass="+scriptParam.pass+"&loader=true";
+document.body.appendChild(s);})();'
+      ><?= bookmarkletName ?></a
+    >
   </body>
 </html>
-
-

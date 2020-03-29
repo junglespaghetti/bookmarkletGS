@@ -6,33 +6,49 @@ function onOpen() {
     .addToUi();
 }
 
-function showBookmarkletSidebar(){
-  let html = HtmlService.createTemplateFromFile('html/mookmarkletSetting.html');
-  html.scriptURL = PropertiesService.getUserProperties().getProperty("scriptURL");
-  html.scriptPassword = PropertiesService.getUserProperties().getProperty("scriptPassword") || getRndStr();
-  html.scriptCallback = PropertiesService.getUserProperties().getProperty("scriptCallback");
+function showBookmarkletSidebar() {
+  let html = HtmlService.createTemplateFromFile("html/mookmarkletSetting.html");
+  html.scriptURL = PropertiesService.getUserProperties().getProperty(
+    "scriptURL"
+  );
+  html.scriptPassword =
+    PropertiesService.getUserProperties().getProperty("scriptPassword") ||
+    getRndStr();
+  html.scriptCallback = PropertiesService.getUserProperties().getProperty(
+    "scriptCallback"
+  );
   html.cdn = PropertiesService.getUserProperties().getProperty("cdn");
   html.css = PropertiesService.getUserProperties().getProperty("css");
   html.origin = PropertiesService.getUserProperties().getProperty("origin");
-  html.originLock = PropertiesService.getUserProperties().getProperty("originLock") || false;
+  html.originLock =
+    PropertiesService.getUserProperties().getProperty("originLock") || false;
   html.urlLavel = multiLang("This script url");
   html.passwordLavel = multiLang("Script password");
   html.callbackLabel = multiLang("Coallback function");
   html.originLavel = multiLang("Use only origin url");
   html.originLockLabel = multiLang("lock");
-  SpreadsheetApp.getUi().showSidebar(html.evaluate().setTitle(multiLang('Bookmarklet loader settings')));
+  SpreadsheetApp.getUi().showSidebar(
+    html.evaluate().setTitle(multiLang("Bookmarklet loader settings"))
+  );
 }
 
-function test(){Logger.log(google.script.url.getLocation())};
+function test() {
+  Logger.log(google.script.url.getLocation());
+}
 
 function popBookmarkletTag() {
-  let html = HtmlService.createTemplateFromFile('html/bookmarklet.html');
-  html.bookmarkretDropInfo = multiLang("Drop the following link on the browser toolbar to use it.");
+  let html = HtmlService.createTemplateFromFile("html/bookmarklet.html");
+  html.bookmarkretDropInfo = multiLang(
+    "Drop the following link on the browser toolbar to use it."
+  );
   html.selfUrl = "test";
   html.selfPassword = "aaa";
   html.userCallback = "hoge";
   html.bookmarkletName = "bookma";
-  SpreadsheetApp.getUi().showModalDialog(html.evaluate(), multiLang('Create bookmark'));
+  SpreadsheetApp.getUi().showModalDialog(
+    html.evaluate(),
+    multiLang("Create bookmark")
+  );
 }
 
 function doGet(e) {
@@ -103,11 +119,11 @@ function multiLang(str) {
   return LanguageApp.translate(str, "", lang);
 }
 
-function getRndStr(){
+function getRndStr() {
   var str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
- var len = 8;
+  var len = 8;
   var result = "";
-  for(var i=0;i<len;i++){
+  for (var i = 0; i < len; i++) {
     result += str.charAt(Math.floor(Math.random() * str.length));
   }
   return result;
