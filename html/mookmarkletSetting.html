@@ -7,6 +7,7 @@
       rel="stylesheet"
     />
     <script>
+    
 var initData = window.JSON.parse(<?= initData ?>);
 
 window.addEventListener("load", function() {
@@ -14,22 +15,22 @@ window.addEventListener("load", function() {
   document.getElementById("password").value = initData.scriptPassword;
   document.getElementById("callback").value = initData.scriptCallback;
   document.getElementById("origin").value = initData.origin;
-  document.getElementById("originLock").value = initData.originLock;
+  document.getElementById("originLock").checked = initData.originLock ? true : false;
   addhosthingList(initData.cdn, "cdn");
   addhosthingList(initData.css, "css");
-
-  alert(initData.scriptPassword);
 });
 
 function addhosthingList(list, listName) {
-  let arr = list.join(",");
-  if (arr[0]) {
+  if(list){
+    let arr = list.split(",");
     for (var i = 0; i < arr.length; i++) {
       addList(listName, ' value="' + arr[i] + '"');
     }
   }
 }
-
+function sideBarClose(res){
+alert(res);
+}
 function addList(hostingListName, val) {
   let span = document.createElement("span");
   span.innerHTML =
@@ -42,7 +43,7 @@ function addList(hostingListName, val) {
   });
   let tableOl = document.getElementById(hostingListName + "-list");
   let li = document.createElement("li");
-  li.innerHTML = '<input class="formLi" placeholder="Hosting url' + val + '">';
+  li.innerHTML = '<input class="formLi" name="'+ hostingListName +'List" placeholder="Hosting url"' + val + '>';
   li.appendChild(span);
   tableOl.appendChild(li);
 }
@@ -51,20 +52,15 @@ function addList(hostingListName, val) {
   </head>
   <body>
     <form id="bookmarklet-form">
-      <label><?= urlLavel ?></label>
-      <div><input id="scriptUrl" /></div>
+      <label><?= urlLavel ?></label> 
+      <div><input id="scriptUrl" name="scriptUrl"/></div>
       <label><?= passwordLavel ?></label>
-      <div><input id="password" /></div>
+      <div><input id="password" name="password"/></div>
       <label><?= callbackLabel ?></label>
-      <div><input id="callback" /></div>
+      <div><input id="callback" name="callback"/></div>
       <label><?= originLavel ?></label>
       <div>
-        <input id="origin" /><input
-          id="originLock"
-          type="checkbox"
-          name="checkbox1"
-          value="true"
-        /><?= originLockLabel ?>
+        <input id="origin" name="origin"/><input id="originLock" type="checkbox" name="originLock"><?= originLockLabel ?>
       </div>
       <p><label>hosting service</label></p>
       <div>
@@ -72,7 +68,7 @@ function addList(hostingListName, val) {
           Add cdn
         </button>
       </div>
-      <ol id="cdn-list" style="padding-left: 20px;"></ol>
+      <ol id="cdn-list" name="cdnList" style="padding-left: 20px;"></ol>
       <div>
         <button id="css-list-button" type="button" onclick="addList('css');">
           Add css
@@ -80,7 +76,7 @@ function addList(hostingListName, val) {
       </div>
       <ol id="css-list" style="padding-left: 20px;"></ol>
       <p>
-        <button id="appry-butto" type="button" onclick="alert('aaa');">
+        <button id="appry-butto" type="button" onclick="google.script.run.withSuccessHandler(sideBarClose).setBookmarkletLoader(this.parentNode.parentNode);">
           Appry
         </button>
       </p>

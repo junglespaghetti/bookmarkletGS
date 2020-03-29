@@ -35,8 +35,28 @@ function showBookmarkletSidebar() {
   );
 }
 
-function test() {
-  Logger.log(google.script.url.getLocation());
+function setBookmarkletLoader(res) {
+  PropertiesService.getUserProperties().setProperty("scriptURL", res.scriptUrl);
+  PropertiesService.getUserProperties().setProperty("scriptPassword", res.password);
+  PropertiesService.getUserProperties().setProperty("scriptCallback", res.callback);
+  PropertiesService.getUserProperties().setProperty("origin", res.origin);
+  let checkedVal = res.originLock ? true : false;
+  PropertiesService.getUserProperties().setProperty("originLock", checkedVal);
+  if(res.cdnList && res.cdnList instanceof Array){
+  PropertiesService.getUserProperties().setProperty("cdn", res.cdnList.join(","));
+  }else if(res.cdnList){
+  PropertiesService.getUserProperties().setProperty("cdn", res.cdnList);
+  }else{
+    PropertiesService.getUserProperties().setProperty("cdn", "");
+  }
+  if(res.cssList && res.cssList instanceof Array){
+  PropertiesService.getUserProperties().setProperty("css", res.cssList.join(","));
+  }else if(res.cssList){
+  PropertiesService.getUserProperties().setProperty("css", res.cssList);
+  }else{
+    PropertiesService.getUserProperties().setProperty("css", "");
+  }
+  Logger.log(res);
 }
 
 function popBookmarkletTag() {
