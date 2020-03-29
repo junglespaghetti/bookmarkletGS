@@ -2,9 +2,49 @@
 <html>
   <head>
     <base target="_top">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+      <script>
+        var scriptURL = <?= scriptURL ?>;
+        var pass = <?= password ?>;
+        var cdn = <?= cdn ?>;
+        var css = <?= css ?>;
+        var origin = <?= origin ?>;
+        var originLock = <?= originLock ?>;
+          
+        function addList(name){
+      let span = document.createElement("span");
+        span.innerHTML = '<i class="material-icons" style="font-size:18px;">cancel</i>';
+        span.class = "delete";
+        span.style = "margin-left: 5px;margin-top:30px;";
+        span.addEventListener("click", function(event) {
+        let remove = event.target.parentNode.parentNode;
+        remove.parentNode.removeChild(remove);
+        });
+        let tableOl = document.getElementById(name+"-list");
+        let li = document.createElement("li");
+        li.innerHTML ='<input class="formLi" placeholder="Hosting url">';
+        li.appendChild(span);
+        tableOl.appendChild(li);
+        };
+      </script>
   </head>
   <body>
-    
+  <form id="bookmarklet-form">
+    <label><?= urlLavel ?></label>
+    <div><input id="scriptUrl"></div>
+    <label><?= passwordLavel ?></label> 
+    <div><input id="password"></div>
+    <label><?= originLavel ?></label>
+    <div><input id="origin"><input id="originLock" type="checkbox" name="checkbox1" value="true"><?= originLockLabel ?></div>
+    <p><label>hosting service</label></p>
+    <div><button id="cdn-list-button" type="button" onclick="addList('cdn')">Add cdn</button></div>
+    <ol id="cdn-list" style="padding-left: 20px;">
+    </ol>
+    <div><button id="css-list-button" type="button" onClick="addList('css')">Add cdn</button></div>
+    <ol id="css-list" style="padding-left: 20px;">
+    </ol>
+    <p><button id="appry-butto" type="button" onClick="alert('aaa')">Appry</button></p>
+    </form>
   </body>
 </html>
 
