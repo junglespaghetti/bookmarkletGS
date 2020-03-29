@@ -5,7 +5,8 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
       <script>
         var scriptURL = <?= scriptURL ?>;
-        var pass = <?= password ?>;
+        var pass = <?= scriptPassword ?>;
+        var scriptCallback = <?= scriptCallback ?>;
         var cdn = <?= cdn ?>;
         var css = <?= css ?>;
         var origin = <?= origin ?>;
@@ -34,16 +35,18 @@
     <div><input id="scriptUrl"></div>
     <label><?= passwordLavel ?></label> 
     <div><input id="password"></div>
+    <label><?= callbackLabel ?></label>
+    <div><input id="callback"></div>
     <label><?= originLavel ?></label>
     <div><input id="origin"><input id="originLock" type="checkbox" name="checkbox1" value="true"><?= originLockLabel ?></div>
     <p><label>hosting service</label></p>
-    <div><button id="cdn-list-button" type="button" onclick="addList('cdn')">Add cdn</button></div>
+    <div><button id="cdn-list-button" type="button" onclick="addList('cdn');">Add cdn</button></div>
     <ol id="cdn-list" style="padding-left: 20px;">
     </ol>
-    <div><button id="css-list-button" type="button" onClick="addList('css')">Add cdn</button></div>
+    <div><button id="css-list-button" type="button" onClick="addList('css');">Add css</button></div>
     <ol id="css-list" style="padding-left: 20px;">
     </ol>
-    <p><button id="appry-butto" type="button" onClick="alert('aaa')">Appry</button></p>
+    <p><button id="appry-butto" type="button" onClick="alert('aaa');">Appry</button></p>
     </form>
   </body>
 </html>

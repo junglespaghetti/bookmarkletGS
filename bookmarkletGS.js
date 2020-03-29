@@ -8,17 +8,19 @@ function onOpen() {
 
 function showBookmarkletSidebar(){
   let html = HtmlService.createTemplateFromFile('html/mookmarkletSetting.html');
-  html.scriptURL = "";
-  html.password = "";
-  html.cdn = "";
-  html.css = "";
-  html.origin = "";
-  html.originLock = "";
-  html.urlLavel = "url";
-  html.passwordLavel = "pass";
-  html.originLavel = "origin";
-  html.originLockLabel = "lock";
-  SpreadsheetApp.getUi().showSidebar(html.evaluate().setTitle('My add-on'));
+  html.scriptURL = PropertiesService.getUserProperties().getProperty("scriptURL");
+  html.scriptPassword = PropertiesService.getUserProperties().getProperty("scriptPassword") || getRndStr();
+  html.scriptCallback = PropertiesService.getUserProperties().getProperty("scriptCallback");
+  html.cdn = PropertiesService.getUserProperties().getProperty("cdn");
+  html.css = PropertiesService.getUserProperties().getProperty("css");
+  html.origin = PropertiesService.getUserProperties().getProperty("origin");
+  html.originLock = PropertiesService.getUserProperties().getProperty("originLock") || false;
+  html.urlLavel = multiLang("This script url");
+  html.passwordLavel = multiLang("Script password");
+  html.callbackLabel = multiLang("Coallback function");
+  html.originLavel = multiLang("Use only origin url");
+  html.originLockLabel = multiLang("lock");
+  SpreadsheetApp.getUi().showSidebar(html.evaluate().setTitle(multiLang('Bookmarklet loader settings')));
 }
 
 function test(){Logger.log(google.script.url.getLocation())};
