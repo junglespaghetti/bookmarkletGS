@@ -1,17 +1,24 @@
 function onOpen() {
   var ui = SpreadsheetApp.getUi();
   ui.createMenu(multiLang("Scripts"))
-    .addItem(multiLang("Bookmarklet settings"), "fileman")
-    .addItem(multiLang("Get bookmarklet"), "setATRdays")
-    .addSeparator()
-    .addSubMenu(
-      ui
-        .createMenu(multiLang("Oanda settings"))
-        .addItem(multiLang("Account ID setting"), "setAccountID")
-        .addItem(multiLang("Authentication key setting"), "setAuth")
-        .addItem(multiLang("Account type"), "setAccountType")
-    )
+    .addItem(multiLang("Bookmarklet settings"), "showBookmarkletSidebar")
+    .addItem(multiLang("Get bookmarklet"), "popBookmarkletTag")
     .addToUi();
+}
+
+function showBookmarkletSidebar(){
+  let html = HtmlService.createTemplateFromFile('html/mookmarkletSetting.html');
+  SpreadsheetApp.getUi().showSidebar(html.evaluate().setTitle('My add-on'));
+}
+
+function popBookmarkletTag() {
+  let html = HtmlService.createTemplateFromFile('html/bookmarklet.html');
+  html.bookmarkretDropInfo = multiLang("Drop the following link on the browser toolbar to use it.");
+  html.selfUrl = "test";
+  html.selfPassword = "aaa";
+  html.userCallback = "hoge";
+  html.bookmarkletName = "bookma";
+  SpreadsheetApp.getUi().showModalDialog(html.evaluate(), multiLang('Create bookmark'));
 }
 
 function doGet(e) {
