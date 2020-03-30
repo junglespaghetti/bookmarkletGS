@@ -7,24 +7,9 @@ function onOpen() {
 }
 
 function showBookmarkletSidebar() {
-  let userDate = {};
-  userDate.scriptURL = PropertiesService.getUserProperties().getProperty(
-    "scriptURL"
-  );
-  userDate.scriptPassword =
-    PropertiesService.getUserProperties().getProperty("scriptPassword") ||
-    getRndStr();
-  userDate.scriptCallback = PropertiesService.getUserProperties().getProperty(
-    "scriptCallback"
-  );
-  userDate.cdn = PropertiesService.getUserProperties().getProperty("cdn");
-  userDate.css = PropertiesService.getUserProperties().getProperty("css");
-  userDate.origin = PropertiesService.getUserProperties().getProperty("origin");
-  userDate.originLock =
-    PropertiesService.getUserProperties().getProperty("originLock") || false;
-  
+  var prop = PropertiesService.getUserProperties();
   let html = HtmlService.createTemplateFromFile("html/mookmarkletSetting.html");
-  html.initData = JSON.stringify(userDate);
+  html.bookmarkletLavel = multiLang("Bookmarklet name");
   html.urlLavel = multiLang("This script url");
   html.passwordLavel = multiLang("Script password");
   html.callbackLabel = multiLang("Coallback function");
@@ -35,40 +20,83 @@ function showBookmarkletSidebar() {
   );
 }
 
-function setBookmarkletLoader(res) {
-  PropertiesService.getUserProperties().setProperty("scriptURL", res.scriptUrl);
-  PropertiesService.getUserProperties().setProperty("scriptPassword", res.password);
-  PropertiesService.getUserProperties().setProperty("scriptCallback", res.callback);
-  PropertiesService.getUserProperties().setProperty("origin", res.origin);
-  let checkedVal = res.originLock ? true : false;
-  PropertiesService.getUserProperties().setProperty("originLock", checkedVal);
-  if(res.cdnList && res.cdnList instanceof Array){
-  PropertiesService.getUserProperties().setProperty("cdn", res.cdnList.join(","));
-  }else if(res.cdnList){
-  PropertiesService.getUserProperties().setProperty("cdn", res.cdnList);
+function getBookmarkletList(){
+  return PropertiesService.getUserProperties().getProperty("bookmarkletName");
+}
+
+function getBookmarkletData(name){
+  if(name && PropertiesService.getUserProperties().getProperty(name)){
+  return PropertiesService.getUserProperties().getProperty(name);
   }else{
-    PropertiesService.getUserProperties().setProperty("cdn", "");
+    return
   }
-  if(res.cssList && res.cssList instanceof Array){
-  PropertiesService.getUserProperties().setProperty("css", res.cssList.join(","));
-  }else if(res.cssList){
-  PropertiesService.getUserProperties().setProperty("css", res.cssList);
+}
+
+function setBookmarkletData(res) {
+  var prop = PropertiesService.getUserProperties();
+  let bookmarkletNames = prop.getProperty("bookmarkletName")
+  if(prop.getProperty("bookmarkletName")){
+    var arr = splitStringArray(prop.getProperty("bookmarkletName"),res.bookmarkletName);
+    arr.push(res.bookmarkletName);
+  prop.setProperty("bookmarkletName",arr.join(","));
   }else{
-    PropertiesService.getUserProperties().setProperty("css", "");
+    prop.setProperty("bookmarkletName",res.bookmarkletName);
   }
-  Logger.log(res);
+  prop.setProperty(res.bookmarkletName,JSON.stringify(res));
+  return "update";
+}
+
+function deltest(){
+  var prop = PropertiesService.getUserProperties();
+  prop.deleteProperty("bookmarkletName");
+}
+
+function deleteBookmarkletData(name){
+  var prop = PropertiesService.getUserProperties();
+  if(prop.getProperty("bookmarkletName")){
+  var arr = splitStringArray(prop.getProperty("bookmarkletName"),name);
+    prop.setProperty("bookmarkletName",arr.join(","));
+  }else if(prop.getProperty("bookmarkletName") == name){
+    prop.deleteProperty("bookmarkletName");
+  }
+  if(prop.getProperty(name)){
+  prop.deleteProperty(name);
+  }
+  return "delete";
+}
+
+function splitStringArray(val,name){
+  var arr
+  if((typeof (val) == "string" || val instanceof String) && val.match(/,/)){
+    arr = val.split(",");
+  }else if(typeof (val) == "string" || val instanceof String){
+    arr = [val]
+  }else if(val instanceof Array){
+    arr = val
+  }else{
+    arr = [];
+  }
+  if(name){
+  return arr.filter(function(a) {
+  return a !== name;
+});
+  }else{
+    return arr;
+  }
 }
 
 function popBookmarkletTag() {
+  var prop = PropertiesService.getUserProperties();
   let html = HtmlService.createTemplateFromFile("html/bookmarklet.html");
   html.bookmarkretDropInfo = multiLang(
     "Drop the following link on the browser toolbar to use it."
   );
-  html.selfUrl = "test";
-  html.selfPassword = "aaa";
-  html.userCallback = "hoge";
+  html.selfUrl = prop.getProperty( "scriptURL");
+  html.selfPassword = prop.getProperty("scriptPassword");
+  html.userCallback = prop.getProperty("scriptCallback");
   html.bookmarkletName = "bookma";
   SpreadsheetApp.getUi().showModalDialog(
+    
     html.evaluate(),
     multiLang("Create bookmark")
   );
@@ -76,6 +104,7 @@ function popBookmarkletTag() {
 
 function doGet(e) {
   var text = e.parameter.text;
+  var prop = PropertiesService.getUserProperties();
 
   Logger.log(e.parameter.callback);
 
