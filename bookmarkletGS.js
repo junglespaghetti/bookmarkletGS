@@ -6,6 +6,8 @@ function onOpen() {
     .addToUi();
 }
 
+//Bookmarklet Setting form
+
 function showBookmarkletSidebar() {
   var prop = PropertiesService.getUserProperties();
   let html = HtmlService.createTemplateFromFile("html/mookmarkletSetting.html");
@@ -35,7 +37,6 @@ function popBookmarkletTag(res) {
     multiLang("Create bookmark")
   );
 }
-
 
 function getBookmarkletList() {
   return PropertiesService.getUserProperties().getProperty("bookmarkletName");
@@ -106,6 +107,8 @@ function splitStringArray(val, name) {
   }
 }
 
+//Bookmarklet doget
+
 function doGet(e) {
   var text = e.parameter.text;
   var prop = PropertiesService.getUserProperties();
@@ -167,6 +170,8 @@ function getLoder() {
     'function objToParameter(a){if(a instanceof Object&&!(a instanceof Array)){var b=[];Object.keys(a).forEach(function(c){b.push(c+"="+a[c])});return"?"+b.join("&")}return""};';
   return loader;
 }
+
+//
 
 function multiLang(str) {
   let lang = SpreadsheetApp.getActiveSpreadsheet()
