@@ -43,6 +43,7 @@ function setBookmarkletData(res) {
     prop.setProperty("bookmarkletName",res.bookmarkletName);
   }
   prop.setProperty(res.bookmarkletName,JSON.stringify(res));
+  popBookmarkletTag();
   return "update";
 }
 

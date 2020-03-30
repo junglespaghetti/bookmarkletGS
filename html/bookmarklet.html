@@ -10,7 +10,7 @@
   <body>
     <p><?= bookmarkretDropInfo ?></p>
     <a
-      href='javascript:(function(){gsUrl="<?= selfUrl ?>";scriptParam={pass:"<?= selfPassword ?>",callback:"<?= userCallback ?>",origin:location.hostname};s=document.createElement("script");s.src=gsUrl+"?pass="+scriptParam.pass+"&loader=true";
+      href='javascript:(function(){gsUrl="<?= selfUrl ?>";scriptParam={pass:"<?= selfPassword ?>",callback:"<?= userCallback ?>",bookmarkletName:"<?= bookmarkletName ?>",origin:location.hostname};s=document.createElement("script");s.src=gsUrl+"?pass="+scriptParam.pass+"&loader=true";
 document.body.appendChild(s);})();'
       ><?= bookmarkletName ?></a
     >
