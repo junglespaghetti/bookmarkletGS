@@ -46,7 +46,7 @@ function getBookmarkletData(name) {
   if (name && PropertiesService.getUserProperties().getProperty(name)) {
     return PropertiesService.getUserProperties().getProperty(name);
   } else {
-    return;
+    return JSON.stringify({scriptUrl:ScriptApp.getService().getUrl()});
   }
 }
 
@@ -64,6 +64,7 @@ function setBookmarkletData(res) {
     prop.setProperty("bookmarkletName", res.bookmarkletName);
   }
   prop.setProperty(res.bookmarkletName, JSON.stringify(res));
+//  Logger.log(prop.getProperty(res.bookmarkletName));
   popBookmarkletTag(res);
   return "update";
 }
@@ -111,22 +112,13 @@ function splitStringArray(val, name) {
 
 function doGet(e) {
   var text = e.parameter.text;
-  var prop = PropertiesService.getUserProperties();
-
-  Logger.log(e.parameter.callback);
-
-  var value;
-
-  if (text) {
-    value = "You say " + text;
-  } else {
-    value = "Please say something!";
-  }
-
-  var result = {
-    message: value
-  };
-
+  var bookmarklet = PropertiesService.getUserProperties().getProperty(e.parameter.bookmarklet_name);
+  bookmarklet = bookmarklet ? JSON.parse(bookmarklet): undefined; 
+  if(bookmarklet && e.parameter.bookmarklet_password == bookmarklet.password){
+    
+  Logger.log(e.parameter.bookmarklet_name);
+  Logger.log(e.parameter.bookmarklet_password);
+  
   var responseText;
 
   var out = ContentService.createTextOutput();
@@ -135,8 +127,8 @@ function doGet(e) {
 
   if (e.parameter.loader) {
     Logger.log(e.parameter.loader);
-    Logger.log(getLoder());
-    responseText = getLoder();
+    Logger.log(getLoder(bookmarklet));
+    responseText = getLoder(bookmarklet);
     out.setMimeType(ContentService.MimeType.JAVASCRIPT);
   } else {
     if (callback) {
@@ -154,14 +146,22 @@ function doGet(e) {
   out.setContent(responseText);
 
   return out;
+    
+  }else{
+    var out = ContentService.createTextOutput();
+    responseText = JSON.stringify({error:multiLang("Missing or incorrect bookmarklet or password")});
+      out.setMimeType(ContentService.MimeType.JSON);
+    out.setContent(responseText);
+     return out;
+  }
 }
 
-function getLoder() {
+function getLoder(bookmarklet) {
+  Logger.log(bookmarklet);
   let loader =
     "(function(f,d,e,a,c,b){" +
-    "d=[" +
-    '"https://bookmarlet-gs.glitch.me/js/bookmarklet.js"' +
-    "];e=[" +
+    "d=[" + loaderList(bookmarklet.cdnList) +
+    "];e=[" + loaderList(bookmarklet.cssList) +
     '];for(a=0;a<e.length;a++)b=document.createElement("link"),b.type="text/css",b.rel="stylesheet",b.href=e[a],document.body.appendChild(b);for(a=0;a<d.length;a++)c=document.createElement("script"),c.src=d[a],a==d.length-1&&(c.onload=function(){f()}),document.body.appendChild(c)})' +
     "(function(){loadJsonp(gsUrl,scriptParam)});";
   loader +=
@@ -171,7 +171,37 @@ function getLoder() {
   return loader;
 }
 
+function loaderList(val){
+  var arr = splitStringArray(val);
+  Logger.log(arr);
+  if(arr.length > 0){
+    return '"' + arr.join('","') + '"';
+  }else{
+    return ""
+  }
+}
+
 //
+
+function splitStringArray(val, name) {
+  var arr;
+  if ((typeof val == "string" || val instanceof String) && val.match(/,/)) {
+    arr = val.split(",");
+  } else if (typeof val == "string" || val instanceof String) {
+    arr = [val];
+  } else if (val instanceof Array) {
+    arr = val;
+  } else {
+    arr = [];
+  }
+  if (name) {
+    return arr.filter(function(a) {
+      return a !== name;
+    });
+  } else {
+    return arr;
+  }
+}
 
 function multiLang(str) {
   let lang = SpreadsheetApp.getActiveSpreadsheet()
