@@ -6,98 +6,154 @@
       href="https://fonts.googleapis.com/icon?family=Material+Icons"
       rel="stylesheet"
     />
-    <script>    
-window.addEventListener("load", function() {
-  google.script.run.withSuccessHandler(initBookmarkletList).getBookmarkletList();
-  let bookmarklet = document.getElementById("bookmarkletName");
-  bookmarklet.addEventListener("change", function(event) {
-     google.script.run.withSuccessHandler(initBookmarkletForm).getBookmarkletData(event.target.value);
-  });
-  bookmarklet.addEventListener("click", function(event) {
-     bookmarklet.value = "";
-  });
-});
-
-function initBookmarkletList(list){
-  if(list){
-    let bookmarkletList = document.getElementById("bookmarklet-list");
-    while (bookmarkletList.firstChild) {
-      bookmarkletList.removeChild(bookmarkletList.firstChild);
-      }
-      let arr = list.split(",");
-      arr.forEach(function(val) {
-        let option = document.createElement("option");
-        option.text = val;
-        option.value = val;
-        bookmarkletList.appendChild(option);
+    <script>
+      window.addEventListener("load", function() {
+        google.script.run
+          .withSuccessHandler(initBookmarkletList)
+          .getBookmarkletList();
+        let bookmarklet = document.getElementById("bookmarkletName");
+        bookmarklet.addEventListener("change", function(event) {
+          google.script.run
+            .withSuccessHandler(initBookmarkletForm)
+            .getBookmarkletData(event.target.value);
+        });
+        bookmarklet.addEventListener("click", function(event) {
+          bookmarklet.value = "";
+        });
       });
-  }
-}
 
-function initBookmarkletForm(bookmarkData){
-  let data = bookmarkData ? JSON.parse(bookmarkData): {};
-  document.getElementById("scriptUrl").value = data.scriptUrl ? data.scriptUrl : "";
-  document.getElementById("password").value = data.password ? data.password : "";
-  document.getElementById("callback").value = data.callback ? data.callback : "";
-  document.getElementById("origin").value = data.origin ? data.origin : "";
-  document.getElementById("originLock").checked = data.originLock ? true : false;
-  addhosthingList(data.cdnList, "cdn");
-  addhosthingList(data.cssList, "css");
-}
+      function initBookmarkletList(list) {
+        if (list) {
+          let bookmarkletList = document.getElementById("bookmarklet-list");
+          while (bookmarkletList.firstChild) {
+            bookmarkletList.removeChild(bookmarkletList.firstChild);
+          }
+          let arr = list.split(",");
+          arr.forEach(function(val) {
+            let option = document.createElement("option");
+            option.text = val;
+            option.value = val;
+            bookmarkletList.appendChild(option);
+          });
+        }
+      }
 
-function addhosthingList(list, listName) {
-  let tableOl = document.getElementById(listName + "-list");
-  while (tableOl.firstChild) {
-  tableOl.removeChild(tableOl.firstChild);
-  }
-  if(list){
-    let arr = list instanceof Array ? list : list.split(",");
-    for (var i = 0; i < arr.length; i++) {
-      addList(listName, ' value="' + arr[i] + '"');
-    }
-  }
-}
+      function initBookmarkletForm(bookmarkData) {
+        let data = bookmarkData ? JSON.parse(bookmarkData) : {};
+        document.getElementById("scriptUrl").value = data.scriptUrl
+          ? data.scriptUrl
+          : "";
+        document.getElementById("password").value = data.password
+          ? data.password
+          : getRndStr();
+        document.getElementById("callback").value = data.callback
+          ? data.callback
+          : "";
+        document.getElementById("origin").value = data.origin
+          ? data.origin
+          : "";
+        document.getElementById("originLock").checked = data.originLock
+          ? true
+          : false;
+        addhosthingList(data.cdnList, "cdn");
+        addhosthingList(data.cssList, "css");
+      }
 
-function updateBookmarkletList(val){
-   google.script.run.withSuccessHandler(initBookmarkletList).getBookmarkletList();
-   if(val == "delete"){
-   document.getElementById('bookmarkletName').value = "";
-   initBookmarkletForm();
-   }
-}
+      function addhosthingList(list, listName) {
+        let tableOl = document.getElementById(listName + "-list");
+        while (tableOl.firstChild) {
+          tableOl.removeChild(tableOl.firstChild);
+        }
+        if (list) {
+          let arr = list instanceof Array ? list : list.split(",");
+          for (var i = 0; i < arr.length; i++) {
+            addList(listName, ' value="' + arr[i] + '"');
+          }
+        }
+      }
 
-function addList(hostingListName, val) {
-  let span = document.createElement("span");
-  span.innerHTML =
-    '<i class="material-icons" style="font-size:18px;">cancel</i>';
-  span.class = "delete";
-  span.style = "margin-left: 5px;margin-top:30px;";
-  span.addEventListener("click", function(event) {
-    let remove = event.target.parentNode.parentNode;
-    remove.parentNode.removeChild(remove);
-  });
-  let tableOl = document.getElementById(hostingListName + "-list");
-  let li = document.createElement("li");
-  li.innerHTML = '<input class="formLi" name="'+ hostingListName +'List" placeholder="Hosting '+ hostingListName +' url"' + val + '>';
-  li.appendChild(span);
-  tableOl.appendChild(li);
-}
+      function addList(hostingListName, val) {
+        let span = document.createElement("span");
+        span.innerHTML =
+          '<i class="material-icons" style="font-size:18px;">cancel</i>';
+        span.class = "delete";
+        span.style = "margin-left: 5px;margin-top:30px;";
+        span.addEventListener("click", function(event) {
+          let remove = event.target.parentNode.parentNode;
+          remove.parentNode.removeChild(remove);
+        });
+        let tableOl = document.getElementById(hostingListName + "-list");
+        let li = document.createElement("li");
+        li.innerHTML =
+          '<input class="formLi" name="' +
+          hostingListName +
+          'List" placeholder="Hosting ' +
+          hostingListName +
+          ' url"' +
+          val +
+          ">";
+        li.appendChild(span);
+        tableOl.appendChild(li);
+      }
 
+      function updateBookmarkletList(val) {
+        google.script.run
+          .withSuccessHandler(initBookmarkletList)
+          .getBookmarkletList();
+        if (val == "delete") {
+          document.getElementById("bookmarkletName").value = "";
+          initBookmarkletForm();
+        }
+      }
+
+      function getRndStr() {
+        var str =
+          "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        var len = 16;
+        var result = "";
+        for (var i = 0; i < len; i++) {
+          result += str.charAt(Math.floor(Math.random() * str.length));
+        }
+        return result;
+      }
     </script>
   </head>
   <body>
     <form id="bookmarklet-form">
-      <label><?= bookmarkletLavel ?></label> 
-      <div><input type="text" id="bookmarkletName" name="bookmarkletName" list="bookmarklet-list" placeholder="Bookmarklet name" autocomplete="off"><datalist id="bookmarklet-list"></datalist></div>
-      <label><?= urlLavel ?></label> 
-      <div><input id="scriptUrl" name="scriptUrl" placeholder="Script exec url"/></div>
+      <label><?= bookmarkletLavel ?></label>
+      <div>
+        <input
+          type="text"
+          id="bookmarkletName"
+          name="bookmarkletName"
+          list="bookmarklet-list"
+          placeholder="Bookmarklet name"
+          autocomplete="off"
+        /><datalist id="bookmarklet-list"></datalist>
+      </div>
+      <label><?= urlLavel ?></label>
+      <div>
+        <input id="scriptUrl" name="scriptUrl" placeholder="Script exec url" />
+      </div>
       <label><?= passwordLavel ?></label>
-      <div><input id="password" name="password" placeholder="Script password"/></div>
+      <div>
+        <input id="password" name="password" placeholder="Script password" />
+      </div>
       <label><?= callbackLabel ?></label>
-      <div><input id="callback" name="callback" placeholder="Callback Fanction name"/></div>
+      <div>
+        <input
+          id="callback"
+          name="callback"
+          placeholder="Callback Fanction name"
+        />
+      </div>
       <label><?= originLavel ?></label>
       <div>
-        <input id="origin" name="origin" placeholder="Origin url JSONP"/><input id="originLock" type="checkbox" name="originLock"><?= originLockLabel ?>
+        <input id="origin" name="origin" placeholder="Origin url JSONP" /><input
+          id="originLock"
+          type="checkbox"
+          name="originLock"
+        /><?= originLockLabel ?>
       </div>
       <p><label>hosting service</label></p>
       <div>
@@ -113,10 +169,18 @@ function addList(hostingListName, val) {
       </div>
       <ol id="css-list" style="padding-left: 20px;"></ol>
       <p>
-        <button id="appry-butto" type="button" onclick="google.script.run.withSuccessHandler(updateBookmarkletList).setBookmarkletData(this.parentNode.parentNode);">
+        <button
+          id="appry-butto"
+          type="button"
+          onclick="google.script.run.withSuccessHandler(updateBookmarkletList).setBookmarkletData(this.parentNode.parentNode);"
+        >
           Appry
         </button>
-        <button id="appry-butto" type="button" onclick="google.script.run.withSuccessHandler(updateBookmarkletList).deleteBookmarkletData(document.getElementById('bookmarkletName').value);">
+        <button
+          id="appry-butto"
+          type="button"
+          onclick="google.script.run.withSuccessHandler(updateBookmarkletList).deleteBookmarkletData(document.getElementById('bookmarkletName').value);"
+        >
           Delete
         </button>
       </p>

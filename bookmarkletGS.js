@@ -20,72 +20,6 @@ function showBookmarkletSidebar() {
   );
 }
 
-function getBookmarkletList(){
-  return PropertiesService.getUserProperties().getProperty("bookmarkletName");
-}
-
-function getBookmarkletData(name){
-  if(name && PropertiesService.getUserProperties().getProperty(name)){
-  return PropertiesService.getUserProperties().getProperty(name);
-  }else{
-    return
-  }
-}
-
-function setBookmarkletData(res) {
-  var prop = PropertiesService.getUserProperties();
-  let bookmarkletNames = prop.getProperty("bookmarkletName")
-  if(prop.getProperty("bookmarkletName")){
-    var arr = splitStringArray(prop.getProperty("bookmarkletName"),res.bookmarkletName);
-    arr.push(res.bookmarkletName);
-  prop.setProperty("bookmarkletName",arr.join(","));
-  }else{
-    prop.setProperty("bookmarkletName",res.bookmarkletName);
-  }
-  prop.setProperty(res.bookmarkletName,JSON.stringify(res));
-  popBookmarkletTag(res);
-  return "update";
-}
-
-function deltest(){
-  var prop = PropertiesService.getUserProperties();
-  prop.deleteProperty("bookmarkletName");
-}
-
-function deleteBookmarkletData(name){
-  var prop = PropertiesService.getUserProperties();
-  if(prop.getProperty("bookmarkletName")){
-  var arr = splitStringArray(prop.getProperty("bookmarkletName"),name);
-    prop.setProperty("bookmarkletName",arr.join(","));
-  }else if(prop.getProperty("bookmarkletName") == name){
-    prop.deleteProperty("bookmarkletName");
-  }
-  if(prop.getProperty(name)){
-  prop.deleteProperty(name);
-  }
-  return "delete";
-}
-
-function splitStringArray(val,name){
-  var arr
-  if((typeof (val) == "string" || val instanceof String) && val.match(/,/)){
-    arr = val.split(",");
-  }else if(typeof (val) == "string" || val instanceof String){
-    arr = [val]
-  }else if(val instanceof Array){
-    arr = val
-  }else{
-    arr = [];
-  }
-  if(name){
-  return arr.filter(function(a) {
-  return a !== name;
-});
-  }else{
-    return arr;
-  }
-}
-
 function popBookmarkletTag(res) {
   var prop = PropertiesService.getUserProperties();
   let html = HtmlService.createTemplateFromFile("html/bookmarklet.html");
@@ -97,10 +31,79 @@ function popBookmarkletTag(res) {
   html.userCallback = res.password;
   html.bookmarkletName = res.callback;
   SpreadsheetApp.getUi().showModalDialog(
-    
     html.evaluate(),
     multiLang("Create bookmark")
   );
+}
+
+
+function getBookmarkletList() {
+  return PropertiesService.getUserProperties().getProperty("bookmarkletName");
+}
+
+function getBookmarkletData(name) {
+  if (name && PropertiesService.getUserProperties().getProperty(name)) {
+    return PropertiesService.getUserProperties().getProperty(name);
+  } else {
+    return;
+  }
+}
+
+function setBookmarkletData(res) {
+  var prop = PropertiesService.getUserProperties();
+  let bookmarkletNames = prop.getProperty("bookmarkletName");
+  if (prop.getProperty("bookmarkletName")) {
+    var arr = splitStringArray(
+      prop.getProperty("bookmarkletName"),
+      res.bookmarkletName
+    );
+    arr.push(res.bookmarkletName);
+    prop.setProperty("bookmarkletName", arr.join(","));
+  } else {
+    prop.setProperty("bookmarkletName", res.bookmarkletName);
+  }
+  prop.setProperty(res.bookmarkletName, JSON.stringify(res));
+  popBookmarkletTag(res);
+  return "update";
+}
+
+function deleteBookmarkletData(name) {
+  var prop = PropertiesService.getUserProperties();
+  if (prop.getProperty("bookmarkletName")) {
+    var arr = splitStringArray(prop.getProperty("bookmarkletName"), name);
+    prop.setProperty("bookmarkletName", arr.join(","));
+  } else if (prop.getProperty("bookmarkletName") == name) {
+    prop.deleteProperty("bookmarkletName");
+  }
+  if (prop.getProperty(name)) {
+    prop.deleteProperty(name);
+  }
+  return "delete";
+}
+
+function deltest() {
+  var prop = PropertiesService.getUserProperties();
+  prop.deleteProperty("bookmarkletName");
+}
+
+function splitStringArray(val, name) {
+  var arr;
+  if ((typeof val == "string" || val instanceof String) && val.match(/,/)) {
+    arr = val.split(",");
+  } else if (typeof val == "string" || val instanceof String) {
+    arr = [val];
+  } else if (val instanceof Array) {
+    arr = val;
+  } else {
+    arr = [];
+  }
+  if (name) {
+    return arr.filter(function(a) {
+      return a !== name;
+    });
+  } else {
+    return arr;
+  }
 }
 
 function doGet(e) {
@@ -170,14 +173,4 @@ function multiLang(str) {
     .getSpreadsheetLocale()
     .substr(0, 2);
   return LanguageApp.translate(str, "", lang);
-}
-
-function getRndStr() {
-  var str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  var len = 8;
-  var result = "";
-  for (var i = 0; i < len; i++) {
-    result += str.charAt(Math.floor(Math.random() * str.length));
-  }
-  return result;
 }
