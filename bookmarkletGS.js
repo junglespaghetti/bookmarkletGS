@@ -165,7 +165,7 @@ function getLoder(bookmarklet) {
     '];for(a=0;a<e.length;a++)b=document.createElement("link"),b.type="text/css",b.rel="stylesheet",b.href=e[a],document.body.appendChild(b);for(a=0;a<d.length;a++)c=document.createElement("script"),c.src=d[a],a==d.length-1&&(c.onload=function(){f()}),document.body.appendChild(c)})' +
     "(function(){loadJsonp(gsUrl,scriptParam)});";
   loader +=
-    'function loadJsonp(c,a){a.pass=a.pass?a.pass:scriptParam.pass;var b=document.createElement("script");b.src=c+objToParameter(a);document.body.appendChild(b)};';
+    'function loadJsonp(c,a){a.bookmarklet_password=a.bookmarklet_password?a.bookmarklet_password:scriptParam.bookmarklet_password;a.bookmarklet_name=a.bookmarklet_name?a.bookmarklet_name:scriptParam.bookmarklet_name;var b=document.createElement("script");b.src=c+objToParameter(a);document.body.appendChild(b)};';
   loader +=
     'function objToParameter(a){if(a instanceof Object&&!(a instanceof Array)){var b=[];Object.keys(a).forEach(function(c){b.push(c+"="+a[c])});return"?"+b.join("&")}return""};';
   return loader;
