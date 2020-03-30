@@ -43,7 +43,7 @@ function setBookmarkletData(res) {
     prop.setProperty("bookmarkletName",res.bookmarkletName);
   }
   prop.setProperty(res.bookmarkletName,JSON.stringify(res));
-  popBookmarkletTag();
+  popBookmarkletTag(res);
   return "update";
 }
 
@@ -86,16 +86,16 @@ function splitStringArray(val,name){
   }
 }
 
-function popBookmarkletTag() {
+function popBookmarkletTag(res) {
   var prop = PropertiesService.getUserProperties();
   let html = HtmlService.createTemplateFromFile("html/bookmarklet.html");
   html.bookmarkretDropInfo = multiLang(
     "Drop the following link on the browser toolbar to use it."
   );
-  html.selfUrl = prop.getProperty( "scriptURL");
-  html.selfPassword = prop.getProperty("scriptPassword");
-  html.userCallback = prop.getProperty("scriptCallback");
-  html.bookmarkletName = "bookma";
+  html.selfUrl = res.bookmarkletName;
+  html.selfPassword = res.scriptUrl;
+  html.userCallback = res.password;
+  html.bookmarkletName = res.callback;
   SpreadsheetApp.getUi().showModalDialog(
     
     html.evaluate(),
