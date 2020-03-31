@@ -28,10 +28,9 @@ function popBookmarkletTag(res) {
   html.bookmarkretDropInfo = multiLang(
     "Drop the following link on the browser toolbar to use it."
   );
-  html.selfUrl = res.bookmarkletName;
-  html.selfPassword = res.scriptUrl;
-  html.userCallback = res.password;
-  html.bookmarkletName = res.callback;
+  html.selfUrl = res.scriptUrl;
+  html.selfPassword = res.password;
+  html.bookmarkletName = res.bookmarkletName;
   SpreadsheetApp.getUi().showModalDialog(
     html.evaluate(),
     multiLang("Create bookmark")
@@ -111,61 +110,95 @@ function splitStringArray(val, name) {
 //Bookmarklet doget
 
 function doGet(e) {
-  var text = e.parameter.text;
+  Logger.log(JSON.stringify(e.parameter));
   var bookmarklet = PropertiesService.getUserProperties().getProperty(e.parameter.bookmarklet_name);
   bookmarklet = bookmarklet ? JSON.parse(bookmarklet): undefined; 
-  if(bookmarklet && e.parameter.bookmarklet_password == bookmarklet.password){
-    
-  Logger.log(e.parameter.bookmarklet_name);
-  Logger.log(e.parameter.bookmarklet_password);
-  
-  var responseText;
-
   var out = ContentService.createTextOutput();
-
+  var responseText;
+  if(!bookmarklet || e.parameter.bookmarklet_password != bookmarklet.password){  
+    responseText = JSON.stringify({error:multiLang("Missing or incorrect bookmarklet or password")});
+    out.setMimeType(ContentService.MimeType.JSON);
+    out.setContent(responseText);
+    return out;
+  }else if(bookmarklet.originLock && bookmarklet.origin != e.parameter.origin){
+    responseText = JSON.stringify({error:multiLang("Missing or incorrect origin url")});
+    out.setMimeType(ContentService.MimeType.JSON);
+    out.setContent(responseText);
+    return out;       
+  }
+  bookmarklet.parameter = {};
   var callback = e.parameter.callback;
 
   if (e.parameter.loader) {
-    Logger.log(e.parameter.loader);
-    Logger.log(getLoder(bookmarklet));
-    responseText = getLoder(bookmarklet);
+    if(!bookmarklet.originLock){
+    bookmarklet.origin = e.parameter.origin
+    PropertiesService.getUserProperties().setProperty(bookmarklet.bookmarkletName, JSON.stringify(bookmarklet))
+    }
+    if(bookmarklet.callback){bookmarklet.parameter.callback = bookmarklet.callback}
+     responseText = getLoder(bookmarklet);
     out.setMimeType(ContentService.MimeType.JAVASCRIPT);
   } else {
-    if (callback) {
-      responseText = callback + "(" + JSON.stringify(result) + ")";
-      //Mime Typeをapplication/javascriptに設定
+    if (callback && bookmarklet.callback == callback) {
+      responseText = callback + "(" + JSON.stringify(bookmarklet) + ")";
       out.setMimeType(ContentService.MimeType.JAVASCRIPT);
+    }else if(callback && e.parameter.request){
+        Logger.log(JSON.stringify(e.parameter.request));
+        responseText = callback + "(" + JSON.stringify(requestAction(e.parameter.request)) + ")";
+      out.setMimeType(ContentService.MimeType.JAVASCRIPT);
+    }else if(callback){
+      responseText = callback + "(" + JSON.stringify({}) + ")";
+      out.setMimeType(ContentService.MimeType.JAVASCRIPT);      
     } else {
-      responseText = JSON.stringify(result);
-      //Mime Typeをapplication/jsonに設定
+      responseText = JSON.stringify({});
       out.setMimeType(ContentService.MimeType.JSON);
     }
   }
 
-  //JSONPテキストをセットする
   out.setContent(responseText);
 
   return out;
     
-  }else{
-    var out = ContentService.createTextOutput();
-    responseText = JSON.stringify({error:multiLang("Missing or incorrect bookmarklet or password")});
-      out.setMimeType(ContentService.MimeType.JSON);
-    out.setContent(responseText);
-     return out;
+}
+
+function requestAction(request){
+  request = request ? JSON.parse(decodeURIComponent(request)) : "";
+  if(!request.action){
+    return {};
   }
+  
+  var respons = {test:"test"};
+  
+  switch( request.action ) {
+    case 'get':
+        
+        break;
+
+    case 'post':
+        
+        break;
+
+    case 'put':
+        
+        break;
+
+    case 'delete':
+        
+        break;
+}
+  return respons;
+  
 }
 
 function getLoder(bookmarklet) {
-  Logger.log(bookmarklet);
   let loader =
     "(function(f,d,e,a,c,b){" +
     "d=[" + loaderList(bookmarklet.cdnList) +
     "];e=[" + loaderList(bookmarklet.cssList) +
     '];for(a=0;a<e.length;a++)b=document.createElement("link"),b.type="text/css",b.rel="stylesheet",b.href=e[a],document.body.appendChild(b);for(a=0;a<d.length;a++)c=document.createElement("script"),c.src=d[a],a==d.length-1&&(c.onload=function(){f()}),document.body.appendChild(c)})' +
-    "(function(){loadJsonp(gsUrl,scriptParam)});";
+    "(function(){loadJsonp("+ JSON.stringify(bookmarklet) +")});";
   loader +=
-    'function loadJsonp(c,a){a.bookmarklet_password=a.bookmarklet_password?a.bookmarklet_password:scriptParam.bookmarklet_password;a.bookmarklet_name=a.bookmarklet_name?a.bookmarklet_name:scriptParam.bookmarklet_name;var b=document.createElement("script");b.src=c+objToParameter(a);document.body.appendChild(b)};';
+    'function loadJsonp(a){a.originLock&&(a.parameter.origin=location.hostname,a.origin!=location.hostname&&alert("missing origin url"));a.parameter.bookmarklet_name=a.parameter.bookmarklet_name?a.parameter.bookmarklet_name:a.bookmarkletName;a.parameter.bookmarklet_password=a.parameter.bookmarklet_password?a.parameter.bookmarklet_password:a.password;Object.keys(a.parameter).forEach(function(b){a.parameter[b]instanceof Array?a.parameter[b]=encodeURIComponent(a.parameter[b].join(",")):a.parameter[b]instanceof' +  
+    ' Object&&(a.parameter[b]=encodeURIComponent(JSON.stringify(a.parameter[b])))});var c=document.createElement("script");c.src=a.scriptUrl+objToParameter(a.parameter);document.body.appendChild(c)};';
   loader +=
     'function objToParameter(a){if(a instanceof Object&&!(a instanceof Array)){var b=[];Object.keys(a).forEach(function(c){b.push(c+"="+a[c])});return"?"+b.join("&")}return""};';
   return loader;
@@ -173,7 +206,6 @@ function getLoder(bookmarklet) {
 
 function loaderList(val){
   var arr = splitStringArray(val);
-  Logger.log(arr);
   if(arr.length > 0){
     return '"' + arr.join('","') + '"';
   }else{
@@ -208,4 +240,37 @@ function multiLang(str) {
     .getSpreadsheetLocale()
     .substr(0, 2);
   return LanguageApp.translate(str, "", lang);
+}
+
+//****** loader include fanction ******
+//*1 parameter in array is camma split & encodeURIComponent
+//*2 parameter in object is jason string & encodeURIComponent
+//google Closure CompilerREST API (use simple compile)
+
+
+function loadJsonp(obj){
+  if(obj.originLock){obj.parameter.origin = location.hostname;if(obj.origin != location.hostname){alert("missing origin url");};};
+     obj.parameter.bookmarklet_name = obj.parameter.bookmarklet_name ? obj.parameter.bookmarklet_name : obj.bookmarkletName;
+     obj.parameter.bookmarklet_password =  obj.parameter.bookmarklet_password ? obj.parameter.bookmarklet_password : obj.password;
+     Object.keys(obj.parameter).forEach(function (key) {
+       if(obj.parameter[key] instanceof Array){
+         obj.parameter[key] = encodeURIComponent(obj.parameter[key].join(","));       //*1
+       }else if(obj.parameter[key] instanceof Object){
+         obj.parameter[key] = encodeURIComponent(JSON.stringify(obj.parameter[key])); //*2
+       };
+     });
+  var script = document.createElement('script');
+  script.src = obj.scriptUrl + objToParameter(obj.parameter);
+  document.body.appendChild(script);
+}
+
+function objToParameter(obj){
+  if(obj instanceof Object && !(obj instanceof Array)){
+    var arr = [];
+    Object.keys(obj).forEach(function (key){
+      arr.push(key+"="+obj[key]);
+    })
+    return "?"+arr.join("&");
+  }
+  return "";
 }
