@@ -189,6 +189,8 @@ function requestAction(request){
   
 }
 
+//loader & compiled fanction
+
 function getLoder(bookmarklet) {
   let loader =
     "(function(f,d,e,a,c,b){" +
