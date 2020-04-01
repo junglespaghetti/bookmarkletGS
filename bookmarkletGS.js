@@ -6,6 +6,7 @@ function onOpen() {
     .addToUi();
 }
 
+
 //Bookmarklet Setting form
 
 function showBookmarkletSidebar() {
@@ -107,7 +108,7 @@ function splitStringArray(val, name) {
   }
 }
 
-//Bookmarklet doget
+//Bookmarklet doGet function
 
 function doGet(e) {
   Logger.log(JSON.stringify(e.parameter));
@@ -139,11 +140,12 @@ function doGet(e) {
     out.setMimeType(ContentService.MimeType.JAVASCRIPT);
   } else {
     if (callback && bookmarklet.callback == callback) {
+      //initial Multi language add
       responseText = callback + "(" + JSON.stringify(bookmarklet) + ")";
       out.setMimeType(ContentService.MimeType.JAVASCRIPT);
     }else if(callback && e.parameter.request){
         Logger.log(JSON.stringify(e.parameter.request));
-        responseText = callback + "(" + JSON.stringify(requestAction(e.parameter.request)) + ")";
+        responseText = callback + "(" + JSON.stringify(requestHandler(e.parameter.request)) + ")";
       out.setMimeType(ContentService.MimeType.JAVASCRIPT);
     }else if(callback){
       responseText = callback + "(" + JSON.stringify({}) + ")";
@@ -160,15 +162,15 @@ function doGet(e) {
     
 }
 
-function requestAction(request){
+function requestHandler(request){
   request = request ? JSON.parse(decodeURIComponent(request)) : "";
   if(!request.action){
     return {};
   }
   
-  var respons = {test:"test"};
+  var respons = {test:BookmarkretGetSql()};
   
-  switch( request.action ) {
+  switch( request.method ) {
     case 'get':
         
         break;
@@ -184,9 +186,132 @@ function requestAction(request){
     case 'delete':
         
         break;
+      
+    case 'sheets':
+        
+        break;
+      
 }
   return respons;
   
+}
+
+function sheetsRequestHandler(request){
+  
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  
+  var result = {};
+  
+  switch( request.action ) {
+    case 'insert':
+        
+      var name = request.sheet_name || 1;
+      
+      ss.insertSheet(name);
+        
+        break;
+
+    case 'delete':
+      
+      var sheet = ss.getSheetByName(request.sheet_name);
+      
+      ss.deleteSheet(sheet);
+        
+        break;
+
+    case 'info':
+       var arr = [];
+       var sheets = ss.getSheets();
+       Logger.log(sheets.length);
+       for (i = 0; i < sheets.length; i++) {
+         var arr2 = [];
+         arr2.push(sheets[i].getName());
+         arr2.push(sheets[i].getLastRow());
+         arr2.push(sheets[i].getLastColumn());
+         var heder = sheets[i].getRange(1,1,1,sheets[i].getLastColumn()).getValues();
+         arr2.push(heder[0]);
+         arr.push(arr2);
+       }
+       result = arr;
+        break;
+  }
+  return result;
+ }
+
+function getSpreadsheetRange(name,val){
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(name);
+  var arr = splitStringArray(val);
+  for(var i=0;i<arr.length;i++){
+    if((typeof arr[i] == "string" || arr[i] instanceof String) && isValidJson(arr[i])){
+      arr[i] = JSON.parse(arr[i]);
+    }
+    if((typeof arr[i] == "string" || arr[i] instanceof String) && arr[i].match(/lastRow/)){
+      arr[i] = safeEval(arr[i].replace('lastRow',sheet.getLastRow()));
+    }
+    if((typeof arr[i] == "string" || arr[i] instanceof String) && arr[i].match(/lastColumn/)){
+      arr[i] = safeEval(arr[i].replace('lastColumn',sheet.getLastColumn()));
+    }
+    if(arr[i] instanceof Object){
+      if(arr[i].findRow && (i == 0 || i== 2)){
+        var ran = sheet.getRange(1,arr[i].findRow.col,sheet.getLastRow(),1).getValues();
+        Logger.log(ran);
+        arr[i] = findRow(ran,arr[i].findRow);
+        if(i == 2){
+          arr[i] = arr[i]-arr[0];
+        }
+        Logger.log(arr[i]);
+      }
+      }
+    var startRow = isFinite(arr[0]) ? arr[0] : 1;
+    var StratCol = isFinite(arr[1]) ? arr[1] : 1;
+    var endRow = isFinite(arr[2]) ? arr[2] : 1;
+    var endCol = isFinite(arr[3]) ? arr[3] : 1;
+    }
+  return sheet.getRange(startRow,StratCol,endRow,endCol);
+}
+
+function safeEval(val){
+    return Function('"use strict";return ('+val+')')();
+}
+
+function testRange(){
+  var data = getSpreadsheetRange("シート1",[{findRow:{col:1,value:5}},1,{findRow:{col:1,value:10,reverse:true}},3]);
+  Logger.log(data.getValues())
+}
+
+function isValidJson(value) {
+  try {
+    JSON.parse(value)
+  } catch (e) {
+    return false
+  }
+  return true
+}
+
+function findRow(arr,obj){
+  if(obj.reverse){
+      for(var i=arr.length-1;i>=0;i--){
+    if(arr[i][0] === obj.value){
+      return i+1;
+    }
+  }
+   return arr.length;
+  }else{
+  for(var i=0;i<arr.length;i++){
+    if(arr[i][0] === obj.value){
+      return i+1;
+    }
+  }
+     return 1;
+  }
+}
+
+function BookmarkretGetSql(){
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("temp")
+  sheet.getRange(1,1).setFormula("=query('シート1'!G1:Z10," + '"select G where G is not null")');
+  var val = sheet.getRange(1,1).getValue();
+  Logger.log(val);
+  return val;
 }
 
 //loader & compiled fanction
