@@ -163,6 +163,27 @@ function doGet(e) {
     
 }
 
+function testData(){
+  var request = {
+    get:{
+    method: "get",
+    sheet_name: "シート1",
+    renge:[1,1,3,3],  
+    action: "get"
+  }
+  };
+  Logger.log(requestIsObject(request.get));
+  Logger.log(requestHandler(request));
+}
+
+
+function requestIsObject(obj){
+  
+  return Object.prototype.toString.call(obj) == "[object Object]";
+  
+}
+
+
 function requestHandler(request){
   
   if(!request.method){
@@ -171,31 +192,130 @@ function requestHandler(request){
   
   var respons = {};
   
-  switch( request.method ) {
-    case 'get':
-        
-        break;
-
-    case 'post':
-        
-        break;
-
-    case 'put':
-        
-        break;
-
-    case 'delete':
-        
-        break;
+  switch( true ) {
+    case requestIsObject(request.get):
       
-    case 'sheets':
+      respons.get = getRequestHandler(request);
+
+    case requestIsObject(request.post):
       
-      respons = sheetsRequestHandler(request);
-        
-        break;
+      respons.post = {};
+
+    case requestIsObject(request.put):
       
-}
+      respons.put = {};
+
+    case requestIsObject(request.delete):
+      
+      respons.delete ={};
+      
+    case requestIsObject(request.sheet):
+      
+      respons.sheet = sheetsRequestHandler(request);
+      
+  }
+  
   return respons;
+  
+}
+
+function getRequestHandler(request){
+    
+  var respons = {};
+  
+  switch( request.get.action ) {
+    case 'query':
+        
+      respons.value = BookmarkretGetSql(request.get);
+        
+        break;
+
+    case 'getValue':
+            
+      respons.value = getSpreadsheetRange(request.get,getSheetValue);
+        
+        break;
+
+  }
+  
+  respons.action = request.get.action;
+  
+  if(request.request){
+    
+    respons.respons = requestHandler(request.request);
+    
+  }
+  
+  return respons;
+  
+ }
+
+function BookmarkretGetSql(obj){
+  
+  var sheet = setSheet("sql_temp");
+  
+  sheet.hideSheet();
+  
+  sheet.clear();
+  
+  sheet.getRange(1,1).setFormula(obj.formula); //"=query('シート1'!G1:Z10," + '"select G where G is not null")
+  
+  obj.sheet_name = "sql_temp";
+  
+  return getSpreadsheetRange(request,getSheetValue);
+
+}
+
+function getSheetValue(renge,obj,target){
+  
+  if(target == "cell"){
+    
+    return renge.getValue();
+    
+  }
+  
+  return renge.getValues();
+
+}
+
+function postRequestHandler(request){
+    
+  var respons = {};
+  
+  switch( request.post.action ) {
+    case 'append':
+        
+      respons.value = appendRowRequest(request.post);
+        
+        break;
+
+    case 'setValue':
+            
+      respons.value = getSpreadsheetRange(request.post,getSheetValue);
+        
+        break;
+
+  }
+  
+  respons.action = request.post.action;
+  
+  if(request.request){
+    
+    respons.respons = requestHandler(request.request);
+    
+  }
+  
+  return respons;
+  
+ }
+
+function appendRowRequest(obj){
+  
+  var sheet = SpreadsheetApp.getActiveSpreadsheet();
+  
+  sheet.getSheetByName(obj.name).appendRow(obj.rowContents);
+  
+  return sheet.getLastRow();
   
 }
 
@@ -205,28 +325,28 @@ function sheetsRequestHandler(request){
   
   var respons = {};
   
-  switch( request.action ) {
+  switch( request.sheet.action ) {
     case 'insert':
         
-      var name = request.sheet_name || 1;
+      var name = request.sheet.name || 1;
       
-      var sheet = setSheet(request.sheet_name);
+      var sheet = setSheet(request.sheet.name);
       
-      respons.value = sheet.getIndex();
+      respons.insert = sheet.getIndex();
         
         break;
 
     case 'delete':
       
-      var sheet = ss.getSheetByName(request.sheet_name);
+      var sheet = ss.getSheetByName(request.sheet.name);
       
       ss.deleteSheet(sheet);
       
-      respons.value = request.sheet_name;
+      respons.delete = request.sheet.name;
         
         break;
 
-    case 'info':
+    default:
        var arr = [];
        var sheets = ss.getSheets();
        for (i = 0; i < sheets.length; i++) {
@@ -241,11 +361,11 @@ function sheetsRequestHandler(request){
          }
          arr.push(arr2);
        }
-       respons.value = arr;
+       respons.info = arr;
         break;
   }
   
-  respons.action = request.action;
+  respons.action = request.sheet.action;
   
   if(request.request){
     respons.respons = requestHandler(request.request);
@@ -280,22 +400,23 @@ function getSpreadsheetRange(obj,collback){
     if(arr[i] instanceof Object){
       if(arr[i].findRow && (i == 0 || i== 2)){
         var ran = sheet.getRange(1,arr[i].findRow.col,sheet.getLastRow(),1).getValues();
-        Logger.log(ran);
         arr[i] = findRow(ran,arr[i].findRow);
         if(i == 2){
           arr[i] = arr[i]-arr[0];
         }
-        Logger.log(arr[i]);
+        arr[i] = findRow.add ? arr[i] + findRow.add : arr[i];
       }
-      }
-    var startRow = isFinite(arr[0]) ? arr[0] : 1;
-    var StratCol = isFinite(arr[1]) ? arr[1] : 1;
-    var endRow = isFinite(arr[2]) ? arr[2] : 1;
-    var endCol = isFinite(arr[3]) ? arr[3] : 1;
     }
+    var startRow = isFinite(arr[0]) && arr[0] > 0 ? arr[0] : 1;
+    var StratCol = isFinite(arr[1]) && arr[1] > 0 ? arr[1] : 1;
+    var endRow = isFinite(arr[2]) && arr[2] > 0 ? arr[2] : 1;
+    var endCol = isFinite(arr[3]) && arr[3] > 0 ? arr[3] : 1;
+  }
   var renge = sheet.getRange(startRow,StratCol,endRow,endCol);
   
-  return collback(renge,obj,arr);
+  var target = arr[2] == 1 && arr[2] == 1 ? "cell" : "renge";
+  
+  return collback(renge,obj,target);
 
 }
 
@@ -333,23 +454,6 @@ function findRow(arr,obj){
   }
      return 1;
   }
-}
-
-function BookmarkretGetSql(obj){
-  var sheet = setSheet("sql_temp");
-  sheet.hideSheet();
-  sheet.clear();
-  sheet.getRange(1,1).setFormula(obj.formula); //"=query('シート1'!G1:Z10," + '"select G where G is not null")
-}
-
-function getSheetValue(renge,obj,arr){
-  if(arr[2] == 1 && arr[3] == 1){
-  var val = sheet.getRange(1,1).getValue();
-  }else{
-    var val = sheet.getRange(1,1).getValues();
-  }
-  Logger.log(val);
-  return val;
 }
 
 //loader & compiled fanction
