@@ -164,11 +164,11 @@ function doGet(e) {
 
 function requestHandler(request){
   request = request ? JSON.parse(decodeURIComponent(request)) : "";
-  if(!request.action){
+  if(!request.method){
     return {};
   }
   
-  var respons = {test:BookmarkretGetSql()};
+  var respons = {};
   
   switch( request.method ) {
     case 'get':
@@ -188,6 +188,8 @@ function requestHandler(request){
         break;
       
     case 'sheets':
+      
+      respons = sheetsRequestHandler(request);
         
         break;
       
@@ -200,7 +202,7 @@ function sheetsRequestHandler(request){
   
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   
-  var result = {};
+  var respons = {};
   
   switch( request.action ) {
     case 'insert':
@@ -208,6 +210,8 @@ function sheetsRequestHandler(request){
       var name = request.sheet_name || 1;
       
       ss.insertSheet(name);
+      
+      respons.value = request.sheet_name;
         
         break;
 
@@ -216,6 +220,8 @@ function sheetsRequestHandler(request){
       var sheet = ss.getSheetByName(request.sheet_name);
       
       ss.deleteSheet(sheet);
+      
+      respons.value = request.sheet_name;
         
         break;
 
@@ -232,10 +238,17 @@ function sheetsRequestHandler(request){
          arr2.push(heder[0]);
          arr.push(arr2);
        }
-       result = arr;
+       respons.value = arr;
         break;
   }
-  return result;
+  
+  respons.action = request.action;
+  
+  if(request.request){
+    respons.respons = requestHandler(request.request);
+  }
+  
+  return respons;
  }
 
 function getSpreadsheetRange(name,val){
