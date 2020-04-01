@@ -144,8 +144,9 @@ function doGet(e) {
       responseText = callback + "(" + JSON.stringify(bookmarklet) + ")";
       out.setMimeType(ContentService.MimeType.JAVASCRIPT);
     }else if(callback && e.parameter.request){
+      var request = e.parameter.request ? JSON.parse(decodeURIComponent(e.parameter.request)) : {};
         Logger.log(JSON.stringify(e.parameter.request));
-        responseText = callback + "(" + JSON.stringify(requestHandler(e.parameter.request)) + ")";
+        responseText = callback + "(" + JSON.stringify(requestHandler(request)) + ")";
       out.setMimeType(ContentService.MimeType.JAVASCRIPT);
     }else if(callback){
       responseText = callback + "(" + JSON.stringify({}) + ")";
@@ -163,7 +164,7 @@ function doGet(e) {
 }
 
 function requestHandler(request){
-  request = request ? JSON.parse(decodeURIComponent(request)) : "";
+  
   if(!request.method){
     return {};
   }
@@ -209,9 +210,9 @@ function sheetsRequestHandler(request){
         
       var name = request.sheet_name || 1;
       
-      ss.insertSheet(name);
+      var sheet = setSheet(request.sheet_name);
       
-      respons.value = request.sheet_name;
+      respons.value = sheet.getIndex();
         
         break;
 
@@ -228,14 +229,16 @@ function sheetsRequestHandler(request){
     case 'info':
        var arr = [];
        var sheets = ss.getSheets();
-       Logger.log(sheets.length);
        for (i = 0; i < sheets.length; i++) {
          var arr2 = [];
          arr2.push(sheets[i].getName());
+         arr2.push(sheets[i].getIndex());
          arr2.push(sheets[i].getLastRow());
          arr2.push(sheets[i].getLastColumn());
+         if(sheets[i].getLastColumn()>0){
          var heder = sheets[i].getRange(1,1,1,sheets[i].getLastColumn()).getValues();
          arr2.push(heder[0]);
+         }
          arr.push(arr2);
        }
        respons.value = arr;
@@ -249,11 +252,21 @@ function sheetsRequestHandler(request){
   }
   
   return respons;
+  
  }
 
-function getSpreadsheetRange(name,val){
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(name);
-  var arr = splitStringArray(val);
+function setSheet(name){
+  var sheet = SpreadsheetApp.getActive().getSheetByName(name);
+  if(sheet)
+    return sheet
+  sheet=SpreadsheetApp.getActiveSpreadsheet().insertSheet();
+  sheet.setName(name);
+  return sheet;
+}
+
+function getSpreadsheetRange(obj,collback){
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(obj.sheet_name);
+  var arr = splitStringArray(obj.renge);
   for(var i=0;i<arr.length;i++){
     if((typeof arr[i] == "string" || arr[i] instanceof String) && isValidJson(arr[i])){
       arr[i] = JSON.parse(arr[i]);
@@ -280,7 +293,10 @@ function getSpreadsheetRange(name,val){
     var endRow = isFinite(arr[2]) ? arr[2] : 1;
     var endCol = isFinite(arr[3]) ? arr[3] : 1;
     }
-  return sheet.getRange(startRow,StratCol,endRow,endCol);
+  var renge = sheet.getRange(startRow,StratCol,endRow,endCol);
+  
+  return collback(renge,obj,arr);
+
 }
 
 function safeEval(val){
@@ -319,10 +335,19 @@ function findRow(arr,obj){
   }
 }
 
-function BookmarkretGetSql(){
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("temp")
-  sheet.getRange(1,1).setFormula("=query('シート1'!G1:Z10," + '"select G where G is not null")');
+function BookmarkretGetSql(obj){
+  var sheet = setSheet("sql_temp");
+  sheet.hideSheet();
+  sheet.clear();
+  sheet.getRange(1,1).setFormula(obj.formula); //"=query('シート1'!G1:Z10," + '"select G where G is not null")
+}
+
+function getSheetValue(renge,obj,arr){
+  if(arr[2] == 1 && arr[3] == 1){
   var val = sheet.getRange(1,1).getValue();
+  }else{
+    var val = sheet.getRange(1,1).getValues();
+  }
   Logger.log(val);
   return val;
 }
