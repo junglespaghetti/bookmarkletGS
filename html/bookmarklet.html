@@ -10,8 +10,8 @@
   <body>
     <p><?= bookmarkretDropInfo ?></p>
     <a
-      href='javascript:(function(s){s=document.createElement("script");s.src="<?= selfUrl ?>?bookmarklet_password=<?= selfPassword ?>&bookmarklet_name=<?= bookmarkletName ?>&origin="+location.hostname+"&loader=true";
-document.body.appendChild(s);})();'
+      href='javascript:(function(f,d,e,a,c,b){d=[<?!= cdnList ?>];e=[<?!= cssList ?>];for(a=0;a<e.length;a++)b=document.createElement("link"),b.type="text/css",b.rel="stylesheet",b.href=e[a],document.body.appendChild(b);for(a=0;a<d.length;a++)c=document.createElement("script"),c.src=d[a],a==d.length-1&&(c.onload=function(){f()}),document.body.appendChild(c)})(function(){a = new jsonpLoader(<?!= bookmarklet ?>);<?!= callback ?>(a)});var jsonpLoader=function(a){this.url=a.scriptUrl;this.name=a.bookmarkletName;this.password=a.password;this.callback=a.callback;this.origin=location.hostname;this.originLock=a.originLock;this.request={};this.parameterUrl=this.url+"?bookmarklet_name="+this.name+"&bookmarklet_password="+this.password+"&bookmarklet_callback="+this.callback+"&origin="+this.origin+"&request="+encodeURIComponent(JSON.stringify(this.request))};
+'
       ><?= bookmarkletName ?></a
     >
   </body>

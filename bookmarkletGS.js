@@ -1,545 +1,158 @@
 function onOpen() {
+  
   var ui = SpreadsheetApp.getUi();
+  
   ui.createMenu(multiLang("Scripts"))
+  
     .addItem(multiLang("Bookmarklet settings"), "showBookmarkletSidebar")
+  
     .addItem(multiLang("Get bookmarklet"), "popBookmarkletTag")
+  
     .addToUi();
 }
 
-
-//Bookmarklet Setting form
-
-function showBookmarkletSidebar() {
-  var prop = PropertiesService.getUserProperties();
-  let html = HtmlService.createTemplateFromFile("html/mookmarkletSetting.html");
-  html.bookmarkletLavel = multiLang("Bookmarklet name");
-  html.urlLavel = multiLang("This script url");
-  html.passwordLavel = multiLang("Script password");
-  html.callbackLabel = multiLang("Coallback function");
-  html.originLavel = multiLang("Use only origin url");
-  html.originLockLabel = multiLang("lock");
-  SpreadsheetApp.getUi().showSidebar(
-    html.evaluate().setTitle(multiLang("Bookmarklet loader settings"))
-  );
-}
-
-function popBookmarkletTag(res) {
-  var prop = PropertiesService.getUserProperties();
-  let html = HtmlService.createTemplateFromFile("html/bookmarklet.html");
-  html.bookmarkretDropInfo = multiLang(
-    "Drop the following link on the browser toolbar to use it."
-  );
-  html.selfUrl = res.scriptUrl;
-  html.selfPassword = res.password;
-  html.bookmarkletName = res.bookmarkletName;
-  SpreadsheetApp.getUi().showModalDialog(
-    html.evaluate(),
-    multiLang("Create bookmark")
-  );
-}
-
 function getBookmarkletList() {
+  
   return PropertiesService.getUserProperties().getProperty("bookmarkletName");
+  
 }
 
 function getBookmarkletData(name) {
-  if (name && PropertiesService.getUserProperties().getProperty(name)) {
-    return PropertiesService.getUserProperties().getProperty(name);
+  
+  var prop = PropertiesService.getUserProperties();
+  
+  if (name && prop.getProperty(name)) {
+    
+    return prop.getProperty(name);
+    
   } else {
+    
     return JSON.stringify({scriptUrl:ScriptApp.getService().getUrl()});
+    
   }
 }
 
 function setBookmarkletData(res) {
+  
   var prop = PropertiesService.getUserProperties();
+  
   let bookmarkletNames = prop.getProperty("bookmarkletName");
+  
   if (prop.getProperty("bookmarkletName")) {
+    
     var arr = splitStringArray(
+      
       prop.getProperty("bookmarkletName"),
+      
       res.bookmarkletName
+      
     );
+    
     arr.push(res.bookmarkletName);
+    
     prop.setProperty("bookmarkletName", arr.join(","));
+    
   } else {
+    
     prop.setProperty("bookmarkletName", res.bookmarkletName);
+    
   }
+  
   prop.setProperty(res.bookmarkletName, JSON.stringify(res));
+  
 //  Logger.log(prop.getProperty(res.bookmarkletName));
+  
   popBookmarkletTag(res);
+  
   return "update";
+  
 }
 
 function deleteBookmarkletData(name) {
+  
   var prop = PropertiesService.getUserProperties();
+  
   if (prop.getProperty("bookmarkletName")) {
+    
     var arr = splitStringArray(prop.getProperty("bookmarkletName"), name);
+    
     prop.setProperty("bookmarkletName", arr.join(","));
+    
   } else if (prop.getProperty("bookmarkletName") == name) {
+    
     prop.deleteProperty("bookmarkletName");
+    
   }
+  
   if (prop.getProperty(name)) {
+    
     prop.deleteProperty(name);
+    
   }
+  
   return "delete";
 }
 
-function deltest() {
-  var prop = PropertiesService.getUserProperties();
-  prop.deleteProperty("bookmarkletName");
-}
-
-function splitStringArray(val, name) {
-  var arr;
-  if ((typeof val == "string" || val instanceof String) && val.match(/,/)) {
-    arr = val.split(",");
-  } else if (typeof val == "string" || val instanceof String) {
-    arr = [val];
-  } else if (val instanceof Array) {
-    arr = val;
-  } else {
-    arr = [];
-  }
-  if (name) {
-    return arr.filter(function(a) {
-      return a !== name;
-    });
-  } else {
-    return arr;
-  }
-}
-
-//Bookmarklet doGet function
 
 function doGet(e) {
+  
   Logger.log(JSON.stringify(e.parameter));
-  var bookmarklet = PropertiesService.getUserProperties().getProperty(e.parameter.bookmarklet_name);
+  
+  var param = e.parameter;
+  
+  var prop = PropertiesService.getUserProperties()
+  
+  var bookmarklet = prop.getProperty(param.bookmarklet_name);
+  
   bookmarklet = bookmarklet ? JSON.parse(bookmarklet): undefined; 
+  
+  //password origin lock
+  
+  if(!bookmarklet || param.bookmarklet_password != bookmarklet.password){
+    
+    return createMessage("Missing or incorrect bookmarklet or password");
+    
+  }else if(bookmarklet.originLock && bookmarklet.origin != param.origin){
+
+    return createMessage("Missing or incorrect origin url");
+           
+  }
+  
+  //sjonp request
+  
+  if(param.callback && param.request){
+   
+    return createJsonpRespons(bookmarklet,param)
+    
+  }
+    
+}
+
+function createJsonpRespons(bookmarklet,param){
+  
   var out = ContentService.createTextOutput();
+      
+  var request = JSON.parse(decodeURIComponent(param.request));
+      
+  var responseText = param.callback + "(" + JSON.stringify(requestHandler(request)) + ")";
+      
+  out.setMimeType(ContentService.MimeType.JAVASCRIPT);
+      
+  return out.setContent(responseText);
+
+}
+
+
+function createMessage(message){
+  
+  var out = ContentService.createTextOutput();
+  
   var responseText;
-  if(!bookmarklet || e.parameter.bookmarklet_password != bookmarklet.password){  
-    responseText = JSON.stringify({error:multiLang("Missing or incorrect bookmarklet or password")});
-    out.setMimeType(ContentService.MimeType.JSON);
-    out.setContent(responseText);
-    return out;
-  }else if(bookmarklet.originLock && bookmarklet.origin != e.parameter.origin){
-    responseText = JSON.stringify({error:multiLang("Missing or incorrect origin url")});
-    out.setMimeType(ContentService.MimeType.JSON);
-    out.setContent(responseText);
-    return out;       
-  }
-  bookmarklet.parameter = {};
-  var callback = e.parameter.callback;
-
-  if (e.parameter.loader) {
-    if(!bookmarklet.originLock){
-    bookmarklet.origin = e.parameter.origin
-    PropertiesService.getUserProperties().setProperty(bookmarklet.bookmarkletName, JSON.stringify(bookmarklet))
-    }
-    if(bookmarklet.callback){bookmarklet.parameter.callback = bookmarklet.callback}
-     responseText = getLoder(bookmarklet);
-    out.setMimeType(ContentService.MimeType.JAVASCRIPT);
-  } else {
-    if (callback && bookmarklet.callback == callback) {
-      //initial Multi language add
-      responseText = callback + "(" + JSON.stringify(bookmarklet) + ")";
-      out.setMimeType(ContentService.MimeType.JAVASCRIPT);
-    }else if(callback && e.parameter.request){
-      var request = e.parameter.request ? JSON.parse(decodeURIComponent(e.parameter.request)) : {};
-        Logger.log(JSON.stringify(e.parameter.request));
-        responseText = callback + "(" + JSON.stringify(requestHandler(request)) + ")";
-      out.setMimeType(ContentService.MimeType.JAVASCRIPT);
-    }else if(callback){
-      responseText = callback + "(" + JSON.stringify({}) + ")";
-      out.setMimeType(ContentService.MimeType.JAVASCRIPT);      
-    } else {
-      responseText = JSON.stringify({});
-      out.setMimeType(ContentService.MimeType.JSON);
-    }
-  }
-
-  out.setContent(responseText);
-
-  return out;
-    
-}
-
-function testData(){
-  var request = {
-    get:{
-    method: "get",
-    sheet_name: "シート1",
-    renge:[1,1,3,3],  
-    action: "get"
-  }
-  };
-  Logger.log(requestIsObject(request.get));
-  Logger.log(requestHandler(request));
-}
-
-
-function requestIsObject(obj){
   
-  return Object.prototype.toString.call(obj) == "[object Object]";
+  responseText = JSON.stringify({error:multiLang(message)});
   
-}
-
-
-function requestHandler(request){
+  out.setMimeType(ContentService.MimeType.JSON);
   
-  if(!request.method){
-    return {};
-  }
+  return out.setContent(responseText);
   
-  var respons = {};
-  
-  switch( true ) {
-    case requestIsObject(request.get):
-      
-      respons.get = getRequestHandler(request);
-
-    case requestIsObject(request.post):
-      
-      respons.post = {};
-
-    case requestIsObject(request.put):
-      
-      respons.put = {};
-
-    case requestIsObject(request.delete):
-      
-      respons.delete ={};
-      
-    case requestIsObject(request.sheet):
-      
-      respons.sheet = sheetsRequestHandler(request);
-      
-  }
-  
-  return respons;
-  
-}
-
-function getRequestHandler(request){
-    
-  var respons = {};
-  
-  switch( request.get.action ) {
-    case 'query':
-        
-      respons.value = BookmarkretGetSql(request.get);
-        
-        break;
-
-    case 'getValue':
-            
-      respons.value = getSpreadsheetRange(request.get,getSheetValue);
-        
-        break;
-
-  }
-  
-  respons.action = request.get.action;
-  
-  if(request.request){
-    
-    respons.respons = requestHandler(request.request);
-    
-  }
-  
-  return respons;
-  
- }
-
-function BookmarkretGetSql(obj){
-  
-  var sheet = setSheet("sql_temp");
-  
-  sheet.hideSheet();
-  
-  sheet.clear();
-  
-  sheet.getRange(1,1).setFormula(obj.formula); //"=query('シート1'!G1:Z10," + '"select G where G is not null")
-  
-  obj.sheet_name = "sql_temp";
-  
-  return getSpreadsheetRange(request,getSheetValue);
-
-}
-
-function getSheetValue(renge,obj,target){
-  
-  if(target == "cell"){
-    
-    return renge.getValue();
-    
-  }
-  
-  return renge.getValues();
-
-}
-
-function postRequestHandler(request){
-    
-  var respons = {};
-  
-  switch( request.post.action ) {
-    case 'append':
-        
-      respons.value = appendRowRequest(request.post);
-        
-        break;
-
-    case 'setValue':
-            
-      respons.value = getSpreadsheetRange(request.post,getSheetValue);
-        
-        break;
-
-  }
-  
-  respons.action = request.post.action;
-  
-  if(request.request){
-    
-    respons.respons = requestHandler(request.request);
-    
-  }
-  
-  return respons;
-  
- }
-
-function appendRowRequest(obj){
-  
-  var sheet = SpreadsheetApp.getActiveSpreadsheet();
-  
-  sheet.getSheetByName(obj.name).appendRow(obj.rowContents);
-  
-  return sheet.getLastRow();
-  
-}
-
-function sheetsRequestHandler(request){
-  
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  
-  var respons = {};
-  
-  switch( request.sheet.action ) {
-    case 'insert':
-        
-      var name = request.sheet.name || 1;
-      
-      var sheet = setSheet(request.sheet.name);
-      
-      respons.insert = sheet.getIndex();
-        
-        break;
-
-    case 'delete':
-      
-      var sheet = ss.getSheetByName(request.sheet.name);
-      
-      ss.deleteSheet(sheet);
-      
-      respons.delete = request.sheet.name;
-        
-        break;
-
-    default:
-       var arr = [];
-       var sheets = ss.getSheets();
-       for (i = 0; i < sheets.length; i++) {
-         var arr2 = [];
-         arr2.push(sheets[i].getName());
-         arr2.push(sheets[i].getIndex());
-         arr2.push(sheets[i].getLastRow());
-         arr2.push(sheets[i].getLastColumn());
-         if(sheets[i].getLastColumn()>0){
-         var heder = sheets[i].getRange(1,1,1,sheets[i].getLastColumn()).getValues();
-         arr2.push(heder[0]);
-         }
-         arr.push(arr2);
-       }
-       respons.info = arr;
-        break;
-  }
-  
-  respons.action = request.sheet.action;
-  
-  if(request.request){
-    respons.respons = requestHandler(request.request);
-  }
-  
-  return respons;
-  
- }
-
-function setSheet(name){
-  var sheet = SpreadsheetApp.getActive().getSheetByName(name);
-  if(sheet)
-    return sheet
-  sheet=SpreadsheetApp.getActiveSpreadsheet().insertSheet();
-  sheet.setName(name);
-  return sheet;
-}
-
-function getSpreadsheetRange(obj,collback){
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(obj.sheet_name);
-  var arr = splitStringArray(obj.renge);
-  for(var i=0;i<arr.length;i++){
-    if((typeof arr[i] == "string" || arr[i] instanceof String) && isValidJson(arr[i])){
-      arr[i] = JSON.parse(arr[i]);
-    }
-    if((typeof arr[i] == "string" || arr[i] instanceof String) && arr[i].match(/lastRow/)){
-      arr[i] = safeEval(arr[i].replace('lastRow',sheet.getLastRow()));
-    }
-    if((typeof arr[i] == "string" || arr[i] instanceof String) && arr[i].match(/lastColumn/)){
-      arr[i] = safeEval(arr[i].replace('lastColumn',sheet.getLastColumn()));
-    }
-    if(arr[i] instanceof Object){
-      if(arr[i].findRow && (i == 0 || i== 2)){
-        var ran = sheet.getRange(1,arr[i].findRow.col,sheet.getLastRow(),1).getValues();
-        arr[i] = findRow(ran,arr[i].findRow);
-        if(i == 2){
-          arr[i] = arr[i]-arr[0];
-        }
-        arr[i] = findRow.add ? arr[i] + findRow.add : arr[i];
-      }
-    }
-    var startRow = isFinite(arr[0]) && arr[0] > 0 ? arr[0] : 1;
-    var StratCol = isFinite(arr[1]) && arr[1] > 0 ? arr[1] : 1;
-    var endRow = isFinite(arr[2]) && arr[2] > 0 ? arr[2] : 1;
-    var endCol = isFinite(arr[3]) && arr[3] > 0 ? arr[3] : 1;
-  }
-  var renge = sheet.getRange(startRow,StratCol,endRow,endCol);
-  
-  var target = arr[2] == 1 && arr[2] == 1 ? "cell" : "renge";
-  
-  return collback(renge,obj,target);
-
-}
-
-function safeEval(val){
-    return Function('"use strict";return ('+val+')')();
-}
-
-function testRange(){
-  var data = getSpreadsheetRange("シート1",[{findRow:{col:1,value:5}},1,{findRow:{col:1,value:10,reverse:true}},3]);
-  Logger.log(data.getValues())
-}
-
-function isValidJson(value) {
-  try {
-    JSON.parse(value)
-  } catch (e) {
-    return false
-  }
-  return true
-}
-
-function findRow(arr,obj){
-  if(obj.reverse){
-      for(var i=arr.length-1;i>=0;i--){
-    if(arr[i][0] === obj.value){
-      return i+1;
-    }
-  }
-   return arr.length;
-  }else{
-  for(var i=0;i<arr.length;i++){
-    if(arr[i][0] === obj.value){
-      return i+1;
-    }
-  }
-     return 1;
-  }
-}
-
-//loader & compiled fanction
-
-function getLoder(bookmarklet) {
-  let loader =
-    "(function(f,d,e,a,c,b){" +
-    "d=[" + loaderList(bookmarklet.cdnList) +
-    "];e=[" + loaderList(bookmarklet.cssList) +
-    '];for(a=0;a<e.length;a++)b=document.createElement("link"),b.type="text/css",b.rel="stylesheet",b.href=e[a],document.body.appendChild(b);for(a=0;a<d.length;a++)c=document.createElement("script"),c.src=d[a],a==d.length-1&&(c.onload=function(){f()}),document.body.appendChild(c)})' +
-    "(function(){loadJsonp("+ JSON.stringify(bookmarklet) +")});";
-  loader +=
-    'function loadJsonp(a){a.originLock&&(a.parameter.origin=location.hostname,a.origin!=location.hostname&&alert("missing origin url"));a.parameter.bookmarklet_name=a.parameter.bookmarklet_name?a.parameter.bookmarklet_name:a.bookmarkletName;a.parameter.bookmarklet_password=a.parameter.bookmarklet_password?a.parameter.bookmarklet_password:a.password;Object.keys(a.parameter).forEach(function(b){a.parameter[b]instanceof Array?a.parameter[b]=encodeURIComponent(a.parameter[b].join(",")):a.parameter[b]instanceof' +  
-    ' Object&&(a.parameter[b]=encodeURIComponent(JSON.stringify(a.parameter[b])))});var c=document.createElement("script");c.src=a.scriptUrl+objToParameter(a.parameter);document.body.appendChild(c)};';
-  loader +=
-    'function objToParameter(a){if(a instanceof Object&&!(a instanceof Array)){var b=[];Object.keys(a).forEach(function(c){b.push(c+"="+a[c])});return"?"+b.join("&")}return""};';
-  return loader;
-}
-
-function loaderList(val){
-  var arr = splitStringArray(val);
-  if(arr.length > 0){
-    return '"' + arr.join('","') + '"';
-  }else{
-    return ""
-  }
-}
-
-//
-
-function splitStringArray(val, name) {
-  var arr;
-  if ((typeof val == "string" || val instanceof String) && val.match(/,/)) {
-    arr = val.split(",");
-  } else if (typeof val == "string" || val instanceof String) {
-    arr = [val];
-  } else if (val instanceof Array) {
-    arr = val;
-  } else {
-    arr = [];
-  }
-  if (name) {
-    return arr.filter(function(a) {
-      return a !== name;
-    });
-  } else {
-    return arr;
-  }
-}
-
-function multiLang(str) {
-  let lang = SpreadsheetApp.getActiveSpreadsheet()
-    .getSpreadsheetLocale()
-    .substr(0, 2);
-  return LanguageApp.translate(str, "", lang);
-}
-
-//****** loader include fanction ******
-//*1 parameter in array is camma split & encodeURIComponent
-//*2 parameter in object is jason string & encodeURIComponent
-//google Closure CompilerREST API (use simple compile)
-
-
-function loadJsonp(obj){
-  if(obj.originLock){obj.parameter.origin = location.hostname;if(obj.origin != location.hostname){alert("missing origin url");};};
-     obj.parameter.bookmarklet_name = obj.parameter.bookmarklet_name ? obj.parameter.bookmarklet_name : obj.bookmarkletName;
-     obj.parameter.bookmarklet_password =  obj.parameter.bookmarklet_password ? obj.parameter.bookmarklet_password : obj.password;
-     Object.keys(obj.parameter).forEach(function (key) {
-       if(obj.parameter[key] instanceof Array){
-         obj.parameter[key] = encodeURIComponent(obj.parameter[key].join(","));       //*1
-       }else if(obj.parameter[key] instanceof Object){
-         obj.parameter[key] = encodeURIComponent(JSON.stringify(obj.parameter[key])); //*2
-       };
-     });
-  var script = document.createElement('script');
-  script.src = obj.scriptUrl + objToParameter(obj.parameter);
-  document.body.appendChild(script);
-}
-
-function objToParameter(obj){
-  if(obj instanceof Object && !(obj instanceof Array)){
-    var arr = [];
-    Object.keys(obj).forEach(function (key){
-      arr.push(key+"="+obj[key]);
-    })
-    return "?"+arr.join("&");
-  }
-  return "";
 }
